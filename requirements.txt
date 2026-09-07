@@ -1,1 +1,7 @@
 pyTelegramBotAPI>=4.29.1
+sqlalchemy
+python-dotenv
+requests
+yookassa
+google-generativeai
+openai
