@@ -1,7 +1,14 @@
 import schedule
 import time
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+# ========== МОСКОВСКОЕ ВРЕМЯ ==========
+MOSCOW_TZ = timezone(timedelta(hours=3))
+
+def now_msk():
+    """Возвращает текущее московское время как naive datetime (без tzinfo)"""
+    return datetime.now(MOSCOW_TZ).replace(tzinfo=None)
 
 # Глобальная переменная для бота
 _bot = None
@@ -21,7 +28,7 @@ def check_instructor_reminders():
         from database import get_db, InstructorBooking, User
         
         with next(get_db()) as db:
-            now = datetime.now()
+            now = now_msk()
             
             bookings_24h = db.query(InstructorBooking).filter(
                 InstructorBooking.status == 'accepted',
@@ -139,7 +146,7 @@ def check_lesson_completion():
         from handlers.instructors import send_lesson_completion_question
         
         with next(get_db()) as db:
-            now = datetime.now()
+            now = now_msk()
             
             # Ищем подтверждённые занятия, по которым ещё не отправлен вопрос
             bookings = db.query(InstructorBooking).filter(
@@ -187,7 +194,7 @@ def check_excursion_reminders():
         from database import get_db, ExcursionBooking, ExcursionOffer, User
         
         with next(get_db()) as db:
-            now = datetime.now()
+            now = now_msk()
             
             bookings = db.query(ExcursionBooking).filter(
                 ExcursionBooking.status == 'accepted',
@@ -286,7 +293,7 @@ def process_pending_groups():
         from config import INSTRUCTORS_CHAT_ID, MANAGER_CHAT_ID
         from telebot import types
         
-        tomorrow = (datetime.now() + timedelta(days=1)).strftime('%d.%m.%Y')
+        tomorrow = (now_msk() + timedelta(days=1)).strftime('%d.%m.%Y')
         
         with next(get_db()) as db:
             bookings = db.query(InstructorBooking).filter(
@@ -387,7 +394,7 @@ def process_excursion_pending_groups():
         from config import GUIDES_CHAT_ID, MANAGER_CHAT_ID
         from telebot import types
         
-        tomorrow = (datetime.now() + timedelta(days=1)).strftime('%d.%m.%Y')
+        tomorrow = (now_msk() + timedelta(days=1)).strftime('%d.%m.%Y')
         
         with next(get_db()) as db:
             bookings = db.query(ExcursionBooking).filter(
@@ -506,7 +513,7 @@ def check_excursion_group_status():
         from database import get_db, ExcursionBooking, Excursion, User
         from config import MANAGER_CHAT_ID
         
-        now = datetime.now()
+        now = now_msk()
         
         with next(get_db()) as db:
             groups = db.query(ExcursionBooking).filter(
@@ -669,7 +676,7 @@ def send_automatic_daily_report():
         return
         
     admin_id = 6091836352
-    today = datetime.now().date()
+    today = now_msk().date()
     
     try:
         from database import get_db, HotelBooking, InstructorBooking, ExcursionBooking, ShopOrder, Payment, User
@@ -717,7 +724,7 @@ def send_automatic_daily_report():
             report_text = f"""
 ⏰ *АВТОМАТИЧЕСКИЙ ЕЖЕДНЕВНЫЙ ОТЧЕТ*
 *Дата:* {today.strftime("%d.%m.%Y")}
-*Время:* {datetime.now().strftime("%H:%M")}
+*Время:* {now_msk().strftime("%H:%M")}
 
 📊 *СТАТИСТИКА ЗА ДЕНЬ:*
 
